@@ -160,9 +160,11 @@ proc pickBestCandidate(c: PContext, headSymbol: PNode,
           addTypeBoundSymbols(c.graph, arg.typ, name, filter, symMarker, syms)
 
       if z.state == csMatch:
-        # little hack so that iterators are preferred over everything else:
+        # little hack so that iterators are preferred for iterable formals:
         if sym.kind == skIterator:
-          if not (efWantIterator notin flags and efWantIterable in flags):
+          if efPreferIteratorForIterable in flags:
+            inc(z.iteratorPreference)
+          elif not (efWantIterator notin flags and efWantIterable in flags):
             inc(z.exactMatches, 200)
           else:
             dec(z.exactMatches, 200)
@@ -671,7 +673,7 @@ proc bracketNotFoundError(c: PContext; n: PNode; flags: TExprFlags) =
   # copied from semOverloadedCallAnalyzeEffects, might be overkill:
   const baseFilter = {skProc, skFunc, skMethod, skConverter, skMacro, skTemplate}
   let filter =
-    if flags*{efInTypeof, efWantIterator, efWantIterable} != {}:
+    if flags*{efInTypeof, efWantIterator, efWantIterable, efPreferIteratorForIterable} != {}:
       baseFilter + {skIterator}
     else: baseFilter
   # this will add the errors:

@@ -979,7 +979,7 @@ proc semStaticExpr(c: PContext, n: PNode; expectedType: PType = nil): PNode =
 
 proc semOverloadedCallAnalyseEffects(c: PContext, n: PNode, nOrig: PNode,
                                      flags: TExprFlags; expectedType: PType = nil): PNode =
-  if flags*{efInTypeof, efWantIterator, efWantIterable} != {}:
+  if flags*{efInTypeof, efWantIterator, efWantIterable, efPreferIteratorForIterable} != {}:
     # consider: 'for x in pReturningArray()' --> we don't want the restriction
     # to 'skIterator' anymore; skIterator is preferred in sigmatch already
     # for typeof support.
@@ -1006,7 +1006,7 @@ proc semOverloadedCallAnalyseEffects(c: PContext, n: PNode, nOrig: PNode,
         # See bug #2051:
         result[0] = newSymNode(errorSym(c, n))
       elif callee.kind == skIterator:
-        if efWantIterable in flags:
+        if flags*{efWantIterable, efPreferIteratorForIterable} != {}:
           let typ = newTypeS(tyIterable, c)
           rawAddSon(typ, result.typ)
           result.typ = typ
